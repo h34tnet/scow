@@ -7,18 +7,11 @@ import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
-import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import org.sql2o.Query;
 
 import javax.lang.model.element.Modifier;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSetMetaData;
@@ -31,21 +24,10 @@ import java.util.stream.Collectors;
 
 public class Sql2oQueryPojoCreator {
 
-    private final String jdbcDsn;
-    private final String schema;
-    private final String user;
-    private final String password;
 
     public Sql2oQueryPojoCreator(
-            String jdbcDsn,
-            String schema,
-            String user,
-            String password
     ) {
-        this.jdbcDsn = jdbcDsn;
-        this.schema = schema;
-        this.user = user;
-        this.password = password;
+
     }
 
     /**
@@ -66,48 +48,51 @@ public class Sql2oQueryPojoCreator {
     }
 
     /**
-     * @param queries         the queries to process
-     * @param outputDirectory the directory to save the generated java code
+     * @param queries the queries to process
      * @throws SQLException db error
-     * @throws IOException  write error
      */
-    public void run(Map<String, String> queries, Path outputDirectory) throws SQLException,
-            IOException {
-        try (Connection conn = DriverManager.getConnection(jdbcDsn, user, password)) {
-            conn.setSchema(schema);
-            conn.setAutoCommit(false);
+    public List<CompiledQuery> run(Connection conn, List<QuerySource> queries) throws SQLException {
+        List<CompiledQuery> compiledQueries = new ArrayList<>(queries.size());
 
-            for (Map.Entry<String, String> queryDefinition : queries.entrySet()) {
+        conn.setAutoCommit(false);
 
-                try {
-                    NamedParameterStatement npStatement = new NamedParameterStatement(conn, queryDefinition.getValue());
-                    PreparedStatement statement = npStatement.getStatement();
+        for (QuerySource queryDefinition : queries) {
+            compiledQueries.add(compile(conn, queryDefinition));
+        }
 
-                    Map<String, int[]> parameterMap = npStatement.getParameters();
+        return compiledQueries;
+    }
 
-                    ParameterMetaData pmd = statement.getParameterMetaData();
-                    ResultSetMetaData rsmd = statement.getMetaData();
+    public CompiledQuery compile(Connection conn, QuerySource queryDefinition) throws SQLException {
+        try {
+            NamedParameterStatement npStatement = new NamedParameterStatement(conn, queryDefinition.getSql());
+            PreparedStatement statement = npStatement.getStatement();
 
-                    List<Column> columns = extractColumns(rsmd);
+            Map<String, int[]> parameterMap = npStatement.getParameters();
 
-                    String table = createDtoClassCode(
-                            queryDefinition.getKey(),
-                            queryDefinition.getValue(),
-                            columns,
-                            invert(parameterMap),
-                            pmd
-                    );
+            ParameterMetaData pmd = statement.getParameterMetaData();
+            ResultSetMetaData rsmd = statement.getMetaData();
 
-                    Files.write(
-                            outputDirectory.resolve(queryDefinition.getKey() + "Dto.java"),
-                            table.getBytes(StandardCharsets.UTF_8),
-                            StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
+            List<Column> columns = extractColumns(rsmd);
 
-                } catch (SQLException sqle) {
-                    System.err.printf("Error for query %s:%n%s%n", queryDefinition.getKey(), queryDefinition.getValue());
-                    throw sqle;
-                }
-            }
+            String table = createDtoClassCode(
+                    queryDefinition.getNameSpace(),
+                    queryDefinition.getQueryName(),
+                    queryDefinition.getSql(),
+                    columns,
+                    invert(parameterMap),
+                    pmd
+            );
+
+            return new CompiledQuery(
+                    table,
+                    queryDefinition.getQueryName(),
+                    queryDefinition.getNameSpace());
+
+        } catch (SQLException sqle) {
+            System.err.printf("Error for query %s:%n%s%n", queryDefinition.getQueryName(),
+                    queryDefinition.getSql());
+            throw sqle;
         }
     }
 
@@ -116,6 +101,7 @@ public class Sql2oQueryPojoCreator {
 
         for (int i = 1; i < rsmd.getColumnCount() + 1; i++) {
             columns.add(new Column(rsmd.getColumnLabel(i), rsmd.getColumnClassName(i)));
+            // System.out.println(rsmd.getColumnName(i) + " " + rsmd.getColumnTypeName(i));
         }
 
         return columns;
@@ -132,7 +118,12 @@ public class Sql2oQueryPojoCreator {
         return paramType;
     }
 
-    private String createDtoClassCode(String viewName, String sqlQuery, List<Column> columns, Map<Integer, String> paramMap, ParameterMetaData pmd) throws SQLException {
+    private String createDtoClassCode(String namespace,
+                                      String viewName,
+                                      String sqlQuery,
+                                      List<Column> columns,
+                                      Map<Integer, String> paramMap,
+                                      ParameterMetaData pmd) throws SQLException {
 
         // a constant that stores the original SQL query
         FieldSpec querySpec = FieldSpec.builder(String.class, "QUERY")
@@ -161,8 +152,6 @@ public class Sql2oQueryPojoCreator {
                 .map(entry -> ParameterSpec.builder(entry.getValue(), entry.getKey()).build())
                 .collect(Collectors.toList());
 
-//        paramType.forEach((name, className) -> queryParams.add(ParameterSpec.builder(className, name).build()));
-
         CodeBlock.Builder paramAssignmentCode = CodeBlock.builder()
                 .add("return conn.createQuery(QUERY)\n")
                 .indent();
@@ -170,8 +159,6 @@ public class Sql2oQueryPojoCreator {
 
         paramType.entrySet().stream()
                 .forEach(e -> paramAssignmentCode.add(".addParameter($S, $L)\n", e.getKey(), e.getKey()));
-
-        // paramAssignmentCode.add("");
 
 
         // the method query, which creates a Query object
@@ -189,23 +176,52 @@ public class Sql2oQueryPojoCreator {
         // the class
         TypeSpec.Builder dtoClassSpec = TypeSpec.classBuilder(dtoClassName);
 
-
-        // TypeSpec.classBuilder(ClassName.get(List.class));
-
         ClassName listTypeName = ClassName.get(List.class);
-        TypeName classTypeName = dtoClassName;
 
-        ParameterizedTypeName returnTypeName = ParameterizedTypeName.get(listTypeName, classTypeName);
+        ParameterizedTypeName returnTypeName = ParameterizedTypeName.get(listTypeName, dtoClassName);
 
         // the method query, which creates a Query object
-        MethodSpec executeAndFetch = MethodSpec.methodBuilder("executeAndFetch")
-                .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-                .returns(returnTypeName)
-                .addParameter(org.sql2o.Connection.class, "conn")
-                .addParameters(queryParams)
-                .addCode(paramAssignmentCode.build())
-                .addCode(".executeAndFetch($T.class);\n", classTypeName)
-                .build();
+        MethodSpec executeAndFetch;
+        MethodSpec executeAndFetchSingle;
+
+        if (columns.size() == 1) {
+            ClassName colClassName = ClassName.bestGuess(columns.get(0).getType());
+            executeAndFetch = MethodSpec.methodBuilder("fetchAll")
+                    .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                    .returns(ParameterizedTypeName.get(listTypeName, colClassName))
+                    .addParameter(org.sql2o.Connection.class, "conn")
+                    .addParameters(queryParams)
+                    .addCode(paramAssignmentCode.build())
+                    .addCode(".executeScalarList($T.class);\n", colClassName)
+                    .build();
+
+            executeAndFetchSingle = MethodSpec.methodBuilder("fetch")
+                    .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                    .returns(colClassName)
+                    .addParameter(org.sql2o.Connection.class, "conn")
+                    .addParameters(queryParams)
+                    .addCode(paramAssignmentCode.build())
+                    .addCode(".executeScalar($T.class);\n", colClassName)
+                    .build();
+        } else {
+            executeAndFetch = MethodSpec.methodBuilder("fetchAll")
+                    .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                    .returns(returnTypeName)
+                    .addParameter(org.sql2o.Connection.class, "conn")
+                    .addParameters(queryParams)
+                    .addCode(paramAssignmentCode.build())
+                    .addCode(".executeAndFetch($T.class);\n", dtoClassName)
+                    .build();
+
+            executeAndFetchSingle = MethodSpec.methodBuilder("fetch")
+                    .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                    .returns(dtoClassName)
+                    .addParameter(org.sql2o.Connection.class, "conn")
+                    .addParameters(queryParams)
+                    .addCode(paramAssignmentCode.build())
+                    .addCode(".executeAndFetchFirst($T.class);\n", dtoClassName)
+                    .build();
+        }
 
 
         TypeSpec dtoClass = dtoClassSpec
@@ -214,10 +230,11 @@ public class Sql2oQueryPojoCreator {
                 .addFields(fields)
                 .addMethod(query)
                 .addMethod(executeAndFetch)
+                .addMethod(executeAndFetchSingle)
                 .build();
 
         // the file containing the class
-        JavaFile javaFile = JavaFile.builder("at.sra.app.model.dto", dtoClass)
+        JavaFile javaFile = JavaFile.builder(namespace, dtoClass)
                 .build();
 
         return javaFile.toString();
