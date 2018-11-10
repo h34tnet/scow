@@ -138,7 +138,7 @@ public final class UserDto {
 
 ```
 
-in your application, you can this looks like this:
+In your application, usage could look like this:
 
 ```java
 
@@ -159,11 +159,10 @@ This is all
 
 * very limited 
 * pretty much work in progress
-* opinionated, as I use it for program I'm working on right now
 
-Don't use this in production
+Disclaimer: Don't use this in production
 
 ## TODO
 
-how to use - show maven plugin configuration 
+how to use - maven plugin configuration 
  
