@@ -9,7 +9,6 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-import org.sql2o.Query;
 
 import javax.lang.model.element.Modifier;
 import java.nio.file.Path;
@@ -25,10 +24,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class Sql2oPojoCreator {
+class Sql2oPojoCreator {
 
 
-    public Sql2oPojoCreator() {
+    Sql2oPojoCreator() {
     }
 
     /**
@@ -79,7 +78,7 @@ public class Sql2oPojoCreator {
         return compiledQueries;
     }
 
-    public JavaFile compile(
+    private JavaFile compile(
             Connection con,
             String packageName,
             String className,
@@ -151,11 +150,14 @@ public class Sql2oPojoCreator {
                     .initializer("$S", sql)
                     .build());
 
+            ClassName queryClass = ClassName.bestGuess("org.sql2o.Query");
+            ClassName connectionClass = ClassName.bestGuess("org.sql2o.Connection");
+
             // the method query, which creates a Query object
             MethodSpec query = MethodSpec.methodBuilder("query")
                     .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-                    .returns(Query.class)
-                    .addParameter(org.sql2o.Connection.class, "conn")
+                    .returns(queryClass)
+                    .addParameter(connectionClass, "conn")
                     .addParameters(queryParams)
                     .addCode(paramAssignmentCode.build())
                     .addCode(";\n")
@@ -197,12 +199,14 @@ public class Sql2oPojoCreator {
 
         paramType.forEach((key, value) -> paramAssignmentCode.add(".addParameter($S, $L)\n", key, key));
 
+        ClassName connectionClass = ClassName.bestGuess("org.sql2o.Connection");
+
         if (columns.size() == 1) {
             ClassName colClassName = ClassName.bestGuess(columns.get(0).getType());
             executeAndFetch = MethodSpec.methodBuilder("fetchAll")
                     .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                     .returns(ParameterizedTypeName.get(listTypeName, colClassName))
-                    .addParameter(org.sql2o.Connection.class, "conn")
+                    .addParameter(connectionClass, "conn")
                     .addParameters(queryParams)
                     .addCode(paramAssignmentCode.build())
                     .addCode(".executeScalarList($T.class);\n", colClassName)
@@ -211,7 +215,7 @@ public class Sql2oPojoCreator {
             executeAndFetchSingle = MethodSpec.methodBuilder("fetch")
                     .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                     .returns(colClassName)
-                    .addParameter(org.sql2o.Connection.class, "conn")
+                    .addParameter(connectionClass, "conn")
                     .addParameters(queryParams)
                     .addCode(paramAssignmentCode.build())
                     .addCode(".executeScalar($T.class);\n", colClassName)
@@ -220,7 +224,7 @@ public class Sql2oPojoCreator {
             executeAndFetch = MethodSpec.methodBuilder("fetchAll")
                     .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                     .returns(returnTypeName)
-                    .addParameter(org.sql2o.Connection.class, "conn")
+                    .addParameter(connectionClass, "conn")
                     .addParameters(queryParams)
                     .addCode(paramAssignmentCode.build())
                     .addCode(".executeAndFetch($T.class);\n", dtoClassName)
@@ -229,7 +233,7 @@ public class Sql2oPojoCreator {
             executeAndFetchSingle = MethodSpec.methodBuilder("fetch")
                     .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                     .returns(dtoClassName)
-                    .addParameter(org.sql2o.Connection.class, "conn")
+                    .addParameter(connectionClass, "conn")
                     .addParameters(queryParams)
                     .addCode(paramAssignmentCode.build())
                     .addCode(".executeAndFetchFirst($T.class);\n", dtoClassName)
