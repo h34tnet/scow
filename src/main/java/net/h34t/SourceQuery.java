@@ -4,28 +4,35 @@ import java.nio.file.Path;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public class QuerySource {
+/**
+ * An unparsed query
+ */
+public class SourceQuery {
 
     private final Path sourceDirectory;
     private final Path queryFile;
     private final String sql;
 
-    public QuerySource(Path sourceDirectory, Path queryFile, String sql) {
+    SourceQuery(Path sourceDirectory, Path queryFile, String sql) {
         this.sourceDirectory = sourceDirectory;
         this.queryFile = queryFile;
         this.sql = sql;
     }
 
-    public String getQueryName() {
+    String getQueryName() {
         String path = queryFile.getFileName().toString();
         return path.substring(0, path.length() - 4);
     }
 
-    public String getSql() {
+    String getClassName() {
+        return getQueryName() + "Dto";
+    }
+
+    String getSql() {
         return sql;
     }
 
-    public String getNameSpace() {
+    String getNameSpace() {
         Path sub = sourceDirectory.relativize(queryFile.getParent());
 
         String namespace = StreamSupport.stream(sub.spliterator(), false)
@@ -35,13 +42,13 @@ public class QuerySource {
         return namespace;
     }
 
-    public Path getQueryFile() {
+    Path getQueryFile() {
         return queryFile;
     }
 
     @Override
     public String toString() {
-        return "QuerySource{" +
+        return "SourceQuery{" +
                 "queryFile=" + queryFile +
                 ", sql='" + sql + '\'' +
                 '}';

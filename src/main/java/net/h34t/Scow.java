@@ -10,24 +10,23 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class Scow {
+class Scow {
 
     private final Log log;
 
-    public Scow(Log log) {
+    Scow(Log log) {
         this.log = log;
     }
 
-    public static List<QuerySource> getQuerySources(Path queryDir) throws IOException {
+    static List<SourceQuery> getQuerySources(Path queryDir) throws IOException {
         return Files.find(queryDir, 64, (f, a) -> true)
                 .filter(p -> p.toString().endsWith(".sql"))
                 .map(path -> {
                     try {
-                        return new QuerySource(
+                        return new SourceQuery(
                                 queryDir,
                                 path,
                                 new String(Files.readAllBytes(path), StandardCharsets.UTF_8)
@@ -40,13 +39,11 @@ public class Scow {
     }
 
     static Path getOutputPath(Path outputDir, CompiledQuery cp) {
-
         Path pkg = Paths.get("", cp.getPackageName().split("\\."));
-
-        return outputDir.resolve(pkg).resolve(cp.getClassname() + "Dto.java");
+        return outputDir.resolve(pkg).resolve(cp.getClassname() + ".java");
     }
 
-    public void run(
+    void run(
             String inputPath,
             String outputPath,
             String dsn,
@@ -64,12 +61,12 @@ public class Scow {
             queryDir.getFileSystem().getPathMatcher("glob:**/*.sql");
 
             // collect all query files
-            List<QuerySource> queries = getQuerySources(queryDir);
+            List<SourceQuery> queries = getQuerySources(queryDir);
 
             Connection con = DriverManager.getConnection(dsn, username, password);
             con.setSchema(schema);
 
-            List<CompiledQuery> compiledQueries = new Sql2oQueryPojoCreator()
+            List<CompiledQuery> compiledQueries = new Sql2oPojoCreator()
                     .run(con, queries);
 
             compiledQueries.forEach(cp -> {
@@ -80,18 +77,18 @@ public class Scow {
 
                     log.info("Writing " + cp.getPackageName() + "." + cp.getClassname() + " to " + output.toString());
 
-
                     Files.write(
                             output,
                             cp.getJavaSource().getBytes(StandardCharsets.UTF_8),
                             StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
+
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             });
 
-        } catch (SQLException | ClassNotFoundException | IOException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

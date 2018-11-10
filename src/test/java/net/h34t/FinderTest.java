@@ -14,12 +14,12 @@ public class FinderTest {
     public void findFiles() throws IOException {
         Path inputPath = Paths.get("src/test/resources/sql");
 
-        List<QuerySource> sources = Scow.getQuerySources(inputPath);
+        List<SourceQuery> sources = Scow.getQuerySources(inputPath);
 
-        QuerySource s = sources.get(0);
+        SourceQuery s = sources.get(0);
 
         Assert.assertEquals("Test", s.getQueryName());
-        Assert.assertEquals("SELECT * FROM users;", s.getSql());
+        Assert.assertEquals(Whitespace.normalize("SELECT * FROM users;"), Whitespace.normalize(s.getSql()));
         Assert.assertEquals("foobar.baz", s.getNameSpace());
     }
 
@@ -27,12 +27,12 @@ public class FinderTest {
     public void testTestSql() throws IOException {
         Path inputPath = Paths.get("src/test/resources/sql");
 
-        List<QuerySource> sources = Scow.getQuerySources(inputPath);
+        List<SourceQuery> sources = Scow.getQuerySources(inputPath);
 
-        QuerySource s = sources.get(0);
+        SourceQuery s = sources.get(0);
 
         Assert.assertEquals("Test", s.getQueryName());
-        Assert.assertEquals("SELECT * FROM users;", s.getSql());
+        Assert.assertEquals(Whitespace.normalize("SELECT * FROM users;"), Whitespace.normalize(s.getSql()));
         Assert.assertEquals("foobar.baz", s.getNameSpace());
     }
 
@@ -42,7 +42,7 @@ public class FinderTest {
 
         CompiledQuery cp = new CompiledQuery(
                 "florb",
-                "Test",
+                "TestDto",
                 "foo.bar.baz");
 
         Path p = Scow.getOutputPath(Paths.get("out"), cp);
