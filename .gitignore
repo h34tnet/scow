@@ -1,3 +1,5 @@
+src/test/java/net/h34t/integration/*
+
 target/
 dependency-reduced-pom.xml
 
