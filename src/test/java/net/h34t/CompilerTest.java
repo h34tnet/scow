@@ -39,7 +39,7 @@ public class CompilerTest {
                     msmd.getColumnType(i),
                     msmd.getColumnTypeName(i)));
 
-            java.sql.Types
+            
         }
 
         Sql2oPojoCreator sql2oQueryPojoCreator = new Sql2oPojoCreator();
