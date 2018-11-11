@@ -21,7 +21,8 @@ applied for a single query, using the `---: modifierName` syntax.
 
 ## Example
 
-file `queries/my/app/sql/User.sql`
+File `queries/my/app/sql/User.sql`:
+
 ```sql
 SELECT
     *
@@ -149,34 +150,90 @@ In your application, usage could look like this:
         // or fetch single row
         UserDto adminUser = UserDto.getById.fetch(con, 1);
     }
-
 ```
-
-## Notes
-
-This is all 
-
-* very limited 
-* pretty much work in progress
-
-Disclaimer: Don't use this in production. Or do.
 
 ## Limitations  
 
 * For some reason, jdbc's result set metadata doesn't return usable data for 
-  sqlite (Objects only).
-
-
+  sqlite (Objects only). There's a workaround by providing a partially 
+  implemented `SqliteTranslator`.
+  
+* There are no sanity checks for modifier composition; Dto class properties are
+  determined by the first modifier; if the rest doesn't match up there will be
+  problems.
 
 ## Dependencies
 
-* Scow outputs code that uses sql2o
+* Scow outputs code that uses [sql2o](https://www.sql2o.org/), so this is a 
+  dependency in your project.
+* Of course you also need to provide the correct jdbc driver.
 
+## Maven Plugin configuration example
 
-## TODO
+Note that in this example, the 
+[org.codehaus.mojo.properties-maven-plugin](https://mvnrepository.com/artifact/org.codehaus.mojo/properties-maven-plugin) 
+is used to keep the (secret) configuration out of the build file. 
 
-how to use - maven plugin configuration 
+```xml
+<project>
+
+    <!-- your project configuration -->
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.github.h34tnet</groupId>
+                <artifactId>scow</artifactId>
+                <version>0.1</version>
+                <configuration>
+                    <inputPath>${project.basedir}/queries</inputPath>
+                    <outputPath>${project.basedir}/src/gen/java</outputPath>
+            
+                    <dsn>${dbjdbcurl}</dsn>
+                    <schema>${dbschema}</schema>
+                    <username>${dbusername}</username>
+                    <password>${dbpassword}</password>
+                    <jdbcdriver>org.postgresql.Driver</jdbcdriver>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>scow</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.postgresql</groupId>
+                        <artifactId>postgresql</artifactId>
+                        <version>42.2.5</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+ 
+ ## Notes
+ 
+ This is all ...
+ 
+ * ... very limited, read only (SELECT)
+ * ... without sanity checks for query modifier composition, i.e. it's possible 
+   to generate broken code  
+ * ... work in progress.
+ 
+ _Disclaimer: Don't use this in production ... or do whatever you want._
  
  ## License
 
-This software is published under the [MIT License](LICENSE.txt)
+This software is published under the [MIT License](LICENSE)
