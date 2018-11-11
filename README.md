@@ -138,7 +138,7 @@ public final class UserDto {
 
 ```
 
-in your application, you can this looks like this:
+In your application, usage could look like this:
 
 ```java
 
@@ -152,18 +152,31 @@ in your application, you can this looks like this:
 
 ```
 
-
 ## Notes
 
 This is all 
 
 * very limited 
 * pretty much work in progress
-* opinionated, as I use it for program I'm working on right now
 
-Don't use this in production
+Disclaimer: Don't use this in production. Or do.
+
+## Limitations  
+
+* For some reason, jdbc's result set metadata doesn't return usable data for 
+  sqlite (Objects only).
+
+
+
+## Dependencies
+
+* Scow outputs code that uses sql2o
+
 
 ## TODO
 
-how to use - show maven plugin configuration 
+how to use - maven plugin configuration 
  
+ ## License
+
+This software is published under the [MIT License](LICENSE.txt)
