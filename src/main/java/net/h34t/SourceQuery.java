@@ -35,11 +35,9 @@ public class SourceQuery {
     String getNameSpace() {
         Path sub = sourceDirectory.relativize(queryFile.getParent());
 
-        String namespace = StreamSupport.stream(sub.spliterator(), false)
-                .map(p -> p.toString())
+        return StreamSupport.stream(sub.spliterator(), false)
+                .map(Path::toString)
                 .collect(Collectors.joining("."));
-
-        return namespace;
     }
 
     Path getQueryFile() {

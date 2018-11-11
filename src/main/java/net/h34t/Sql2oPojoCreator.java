@@ -55,12 +55,12 @@ public class Sql2oPojoCreator {
     }
 
     /**
-     * @param conn       the database connection to test against
-     * @param queries    the queries to process
-     * @param transfomer an optional datatype transformer to use
+     * @param conn        the database connection to test against
+     * @param queries     the queries to process
+     * @param transformer an optional datatype transformer to use
      * @throws SQLException in case of a database error
      */
-    List<CompiledQuery> run(Connection conn, List<SourceQuery> queries, DatatypeTranslator transfomer) throws Exception {
+    List<CompiledQuery> run(Connection conn, List<SourceQuery> queries, DatatypeTranslator transformer) throws Exception {
         List<CompiledQuery> compiledQueries = new ArrayList<>(queries.size());
 
         conn.setAutoCommit(false);
@@ -68,7 +68,7 @@ public class Sql2oPojoCreator {
         for (SourceQuery queryDefinition : queries) {
             try {
                 JavaFile jf = compile(conn,
-                        transfomer,
+                        transformer,
                         queryDefinition.getNameSpace(),
                         queryDefinition.getClassName(),
                         queryDefinition.getSql(),
@@ -90,7 +90,7 @@ public class Sql2oPojoCreator {
 
     public JavaFile compile(
             Connection con,
-            DatatypeTranslator transfomer,
+            DatatypeTranslator transformer,
             String packageName,
             String className,
             String rawQuery,
@@ -101,8 +101,8 @@ public class Sql2oPojoCreator {
         PreparedStatement statement = npStatement.getStatement();
         ResultSetMetaData rsmd = statement.getMetaData();
 
-        List<FieldSpec> fields = transfomer != null
-                ? this.createFields(extractColumnsUsingTransformer(rsmd, transfomer))
+        List<FieldSpec> fields = transformer != null
+                ? this.createFields(extractColumnsUsingTransformer(rsmd, transformer))
                 : this.createFields(extractColumns(rsmd));
 
         ClassName cs = ClassName.bestGuess(className);
@@ -266,12 +266,12 @@ public class Sql2oPojoCreator {
         return columns;
     }
 
-    private List<Column> extractColumnsUsingTransformer(ResultSetMetaData rsmd, DatatypeTranslator transfomer) throws SQLException {
+    private List<Column> extractColumnsUsingTransformer(ResultSetMetaData rsmd, DatatypeTranslator transformer) throws SQLException {
         List<Column> columns = new ArrayList<>();
 
         for (int i = 1; i < rsmd.getColumnCount() + 1; i++) {
             columns.add(new Column(rsmd.getColumnLabel(i),
-                    transfomer.transform(rsmd.getColumnTypeName(i))
+                    transformer.transform(rsmd.getColumnTypeName(i))
             ));
         }
 

@@ -84,7 +84,7 @@ public class NamedParameterStatement {
      * @param paramMap map to hold parameter-index mappings
      * @return the parsed query
      */
-    static final String parse(String query, Map<String, int[]> paramMap) {
+    static String parse(String query, Map<String, int[]> paramMap) {
         // I was originally using regular expressions, but they didn't work well for ignoring
         // parameter-like strings inside quotes.
         int length = query.length();
