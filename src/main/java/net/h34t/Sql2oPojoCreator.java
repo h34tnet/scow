@@ -24,10 +24,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-class Sql2oPojoCreator {
+@SuppressWarnings("WeakerAccess")
+public class Sql2oPojoCreator {
 
-
-    Sql2oPojoCreator() {
+    public Sql2oPojoCreator() {
     }
 
     /**
@@ -48,10 +48,19 @@ class Sql2oPojoCreator {
     }
 
     /**
-     * @param queries the queries to process
-     * @throws SQLException db error
+     * @see #run(Connection, List, DatatypeTranslator)
      */
     List<CompiledQuery> run(Connection conn, List<SourceQuery> queries) throws Exception {
+        return run(conn, queries, null);
+    }
+
+    /**
+     * @param conn        the database connection to test against
+     * @param queries     the queries to process
+     * @param transformer an optional datatype transformer to use
+     * @throws SQLException in case of a database error
+     */
+    List<CompiledQuery> run(Connection conn, List<SourceQuery> queries, DatatypeTranslator transformer) throws Exception {
         List<CompiledQuery> compiledQueries = new ArrayList<>(queries.size());
 
         conn.setAutoCommit(false);
@@ -59,6 +68,7 @@ class Sql2oPojoCreator {
         for (SourceQuery queryDefinition : queries) {
             try {
                 JavaFile jf = compile(conn,
+                        transformer,
                         queryDefinition.getNameSpace(),
                         queryDefinition.getClassName(),
                         queryDefinition.getSql(),
@@ -78,8 +88,9 @@ class Sql2oPojoCreator {
         return compiledQueries;
     }
 
-    private JavaFile compile(
+    public JavaFile compile(
             Connection con,
+            DatatypeTranslator transformer,
             String packageName,
             String className,
             String rawQuery,
@@ -90,7 +101,9 @@ class Sql2oPojoCreator {
         PreparedStatement statement = npStatement.getStatement();
         ResultSetMetaData rsmd = statement.getMetaData();
 
-        List<FieldSpec> fields = this.createFields(extractColumns(rsmd));
+        List<FieldSpec> fields = transformer != null
+                ? this.createFields(extractColumnsUsingTransformer(rsmd, transformer))
+                : this.createFields(extractColumns(rsmd));
 
         ClassName cs = ClassName.bestGuess(className);
 
@@ -248,6 +261,18 @@ class Sql2oPojoCreator {
 
         for (int i = 1; i < rsmd.getColumnCount() + 1; i++) {
             columns.add(new Column(rsmd.getColumnLabel(i), rsmd.getColumnClassName(i)));
+        }
+
+        return columns;
+    }
+
+    private List<Column> extractColumnsUsingTransformer(ResultSetMetaData rsmd, DatatypeTranslator transformer) throws SQLException {
+        List<Column> columns = new ArrayList<>();
+
+        for (int i = 1; i < rsmd.getColumnCount() + 1; i++) {
+            columns.add(new Column(rsmd.getColumnLabel(i),
+                    transformer.transform(rsmd.getColumnTypeName(i))
+            ));
         }
 
         return columns;

@@ -16,6 +16,8 @@ public class FinderTest {
 
         List<SourceQuery> sources = Scow.getQuerySources(inputPath);
 
+        Assert.assertEquals(2, sources.size());
+
         SourceQuery s = sources.get(0);
 
         Assert.assertEquals("Test", s.getQueryName());
@@ -29,7 +31,9 @@ public class FinderTest {
 
         List<SourceQuery> sources = Scow.getQuerySources(inputPath);
 
-        SourceQuery s = sources.get(0);
+        SourceQuery s =
+                sources.stream().filter(q -> q.getQueryName().equals("Test")).findAny()
+                        .orElseThrow(RuntimeException::new);
 
         Assert.assertEquals("Test", s.getQueryName());
         Assert.assertEquals(Whitespace.normalize("SELECT * FROM users;"), Whitespace.normalize(s.getSql()));
@@ -37,9 +41,7 @@ public class FinderTest {
     }
 
     @Test
-    public void testOutputPath() throws IOException {
-        Path inputPath = Paths.get("src/test/resources/sql");
-
+    public void testOutputPath() {
         CompiledQuery cp = new CompiledQuery(
                 "florb",
                 "TestDto",
