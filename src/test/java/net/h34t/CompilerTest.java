@@ -5,6 +5,8 @@ import org.junit.Test;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSetMetaData;
 import java.util.List;
 
 public class CompilerTest {
@@ -27,15 +29,18 @@ public class CompilerTest {
                 "created datetime" +
                 ");").execute();
 
-//        PreparedStatement pps = connection.prepareStatement("SELECT * FROM users\n" +
-//                "---: getById\n" +
-//                "WHERE id=:id\n");
-//        ResultSetMetaData msmd = pps.getMetaData();
-//
-//        for (int i = 1; i < msmd.getColumnCount() + 1; i++) {
-//            System.out.println(String.format("%s / %s / %s", msmd.getColumnClassName(i), msmd.getColumnType(i),
-//                    msmd.getColumnTypeName(i)));
-//        }
+        PreparedStatement pps = connection.prepareStatement("SELECT * FROM users\n" +
+                "WHERE id=:id\n");
+        ResultSetMetaData msmd = pps.getMetaData();
+
+        for (int i = 1; i < msmd.getColumnCount() + 1; i++) {
+            System.out.println(String.format("%s / %s / %s",
+                    msmd.getColumnClassName(i),
+                    msmd.getColumnType(i),
+                    msmd.getColumnTypeName(i)));
+
+            java.sql.Types
+        }
 
         Sql2oPojoCreator sql2oQueryPojoCreator = new Sql2oPojoCreator();
 

@@ -152,7 +152,6 @@ In your application, usage could look like this:
 
 ```
 
-
 ## Notes
 
 This is all 
@@ -160,9 +159,24 @@ This is all
 * very limited 
 * pretty much work in progress
 
-Disclaimer: Don't use this in production
+Disclaimer: Don't use this in production. Or do.
+
+## Limitations  
+
+* For some reason, jdbc's result set metadata doesn't return usable data for 
+  sqlite (Objects only).
+
+
+
+## Dependencies
+
+* Scow outputs code that uses sql2o
+
 
 ## TODO
 
 how to use - maven plugin configuration 
  
+ ## License
+
+This software is published under the [MIT License](LICENSE.txt)
