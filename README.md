@@ -142,7 +142,6 @@ public final class UserDto {
 In your application, usage could look like this:
 
 ```java
-
     try (Connection con = sql2o.open()) {
         // fetch all rows
         List<UserDto> users = UserDto.matchByName.fetchAll(con, "john");
@@ -191,10 +190,11 @@ is used to keep the (secret) configuration out of the build file.
             <plugin>
                 <groupId>com.github.h34tnet</groupId>
                 <artifactId>scow</artifactId>
-                <version>0.1</version>
+                <version>0.2</version>
                 <configuration>
                     <inputPath>${project.basedir}/queries</inputPath>
-                    <outputPath>${project.basedir}/src/gen/java</outputPath>
+                    <!-- Optional - this is the default value -->
+                    <outputPath>${project.build.directory}/generated-sources/scow</outputPath>
             
                     <dsn>${dbjdbcurl}</dsn>
                     <schema>${dbschema}</schema>
@@ -204,9 +204,11 @@ is used to keep the (secret) configuration out of the build file.
                 </configuration>
                 <executions>
                     <execution>
+                        <id>scow</id>
+                        <!-- optional -->
                         <phase>generate-sources</phase>
                         <goals>
-                            <goal>scow</goal>
+                            <goal>generate-dto</goal>
                         </goals>
                     </execution>
                 </executions>

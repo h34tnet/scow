@@ -1,17 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.github.h34tnet</groupId>
     <artifactId>scow</artifactId>
-    <version>0.1</version>
+    <version>0.2</version>
     <packaging>maven-plugin</packaging>
 
     <name>scow</name>
-    <!-- <description></description> -->
+    <description>Automatically generate java DTOs from SQL queries.</description>
     <url>https://github.com/h34tnet/scow</url>
 
     <licenses>
@@ -27,29 +25,27 @@
     </properties>
 
     <dependencies>
-        <!-- https://mvnrepository.com/artifact/com.squareup/javapoet -->
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-project</artifactId>
+            <version>2.2.1</version>
+        </dependency>
         <dependency>
             <groupId>com.squareup</groupId>
             <artifactId>javapoet</artifactId>
             <version>1.9.0</version>
         </dependency>
-
-        <!-- https://mvnrepository.com/artifact/org.sql2o/sql2o -->
-
         <dependency>
             <groupId>org.sql2o</groupId>
             <artifactId>sql2o</artifactId>
             <version>1.6.0-RC3</version>
             <scope>test</scope>
         </dependency>
-
-
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-plugin-api</artifactId>
             <version>3.0</version>
         </dependency>
-
         <dependency>
             <groupId>org.apache.maven.plugin-tools</groupId>
             <artifactId>maven-plugin-annotations</artifactId>
@@ -59,10 +55,9 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <version>4.13</version>
             <scope>test</scope>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
         <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
