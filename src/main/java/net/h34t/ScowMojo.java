@@ -6,10 +6,14 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
 
-@Mojo(name = "scow", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
+@Mojo(name = "generate-dto", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
 public class ScowMojo
         extends AbstractMojo {
+
+    @Parameter(defaultValue = "${project}")
+    private MavenProject project;
 
     @Parameter(property = "scow.dsn", required = true)
     private String dsn;
@@ -26,8 +30,7 @@ public class ScowMojo
     @Parameter(property = "scow.inputPath", defaultValue = "${project.directory}/sql-tpl", required = true)
     private String inputPath;
 
-
-    @Parameter(property = "scow.outputPath", defaultValue = "${project.directory}/src/main/java", required = true)
+    @Parameter(property = "scow.outputPath", defaultValue = "${project.build.directory}/generated-sources/scow")
     private String outputPath;
 
     @Parameter(property = "scow.jdbcdriver", defaultValue = "org.postgresql.Driver", required = true)
@@ -35,7 +38,7 @@ public class ScowMojo
 
     public void execute() throws MojoExecutionException {
         try {
-
+            project.addCompileSourceRoot(outputPath);
             new Scow(getLog())
                     .run(inputPath,
                             outputPath,
@@ -50,6 +53,4 @@ public class ScowMojo
             throw new MojoExecutionException("An error occurred", e);
         }
     }
-
-
 }
