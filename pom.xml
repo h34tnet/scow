@@ -33,35 +33,35 @@
         <dependency>
             <groupId>com.squareup</groupId>
             <artifactId>javapoet</artifactId>
-            <version>1.9.0</version>
+            <version>1.13.0</version>
         </dependency>
         <dependency>
             <groupId>org.sql2o</groupId>
             <artifactId>sql2o</artifactId>
-            <version>1.6.0-RC3</version>
+            <version>1.6.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-plugin-api</artifactId>
-            <version>3.0</version>
+            <version>3.8.5</version>
         </dependency>
         <dependency>
             <groupId>org.apache.maven.plugin-tools</groupId>
             <artifactId>maven-plugin-annotations</artifactId>
-            <version>3.4</version>
+            <version>3.6.4</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13.1</version>
+            <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
-            <version>3.25.2</version>
+            <version>3.40.0.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

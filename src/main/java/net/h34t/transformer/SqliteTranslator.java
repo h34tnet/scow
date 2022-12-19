@@ -17,7 +17,9 @@ public class SqliteTranslator implements DatatypeTranslator {
             case "BLOB":
                 return "Object";
             case "DATETIME":
-                return "String";
+                return "java.util.Date";
+            case "NUMERIC":
+                return "java.math.BigDecimal";
             default:
                 throw new RuntimeException("Couldn't convert type \"" + type + "\"");
         }

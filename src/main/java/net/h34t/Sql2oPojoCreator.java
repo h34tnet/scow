@@ -31,7 +31,7 @@ public class Sql2oPojoCreator {
     }
 
     /**
-     * Inverts the paramter map, so it's an index -> paramName map again
+     * Inverts the parameter map, so it's an index -> paramName map again
      *
      * @param parameters the paramName -> index map
      * @return the inverted map
@@ -291,7 +291,7 @@ public class Sql2oPojoCreator {
     }
 
     /**
-     * @param columns the column definitions as given by the resultsetmetadata
+     * @param columns the column definitions as given by the ResultSetMetaData
      * @return the list of properties
      */
     private List<FieldSpec> createFields(List<Column> columns) {
@@ -328,10 +328,6 @@ public class Sql2oPojoCreator {
         String getType() {
             return type;
         }
-
-//        public String getMember() {
-//            return String.format("public %s %s;", this.type, getName());
-//        }
     }
 
 }
