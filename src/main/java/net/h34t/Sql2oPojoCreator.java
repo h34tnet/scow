@@ -72,7 +72,8 @@ public class Sql2oPojoCreator {
                         queryDefinition.getNameSpace(),
                         queryDefinition.getClassName(),
                         queryDefinition.getSql(),
-                        queryDefinition.getQueryFile());
+                        queryDefinition.getQueryFile(),
+                        queryDefinition.getSourceDirectory());
 
                 compiledQueries.add(new CompiledQuery(
                         jf.toString(),
@@ -94,7 +95,8 @@ public class Sql2oPojoCreator {
             String packageName,
             String className,
             String rawQuery,
-            Path sourceFilePath) throws SQLException {
+            Path sourceFilePath,
+            Path sourcesRoot) throws SQLException {
         ParsedQuery parsedQuery = new QueryParser().parse(rawQuery);
 
         NamedParameterStatement npStatement = new NamedParameterStatement(con, parsedQuery.getFirstQuery());
@@ -111,10 +113,9 @@ public class Sql2oPojoCreator {
                 .map(pqm -> createQuerySubclass(con, cs, pqm))
                 .collect(Collectors.toList());
 
-        CodeBlock javaDoc = sourceFilePath != null
-                ? CodeBlock.of("see <a href=\"$L\">$L</a>", sourceFilePath.getFileName().toUri().toString(),
-                sourceFilePath.getFileName().toString())
-                : CodeBlock.of("");
+        Path p = sourcesRoot.relativize(sourceFilePath);
+
+        CodeBlock javaDoc = CodeBlock.of("see $L\n", p.toString());
 
         TypeSpec typeSpec = TypeSpec.classBuilder(cs)
                 .addJavadoc(javaDoc)
@@ -299,8 +300,8 @@ public class Sql2oPojoCreator {
                 .map(c -> {
                     try {
                         return FieldSpec.builder(
-                                ClassName.bestGuess(c.getType()),
-                                c.getName())
+                                        ClassName.bestGuess(c.getType()),
+                                        c.getName())
                                 .addModifiers(Modifier.PUBLIC)
                                 .build();
                     } catch (Exception e) {

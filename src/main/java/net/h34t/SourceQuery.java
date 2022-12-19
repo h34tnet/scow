@@ -44,6 +44,10 @@ public class SourceQuery {
         return queryFile;
     }
 
+    Path getSourceDirectory() {
+        return sourceDirectory;
+    }
+
     @Override
     public String toString() {
         return "SourceQuery{" +

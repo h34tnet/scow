@@ -5,7 +5,7 @@
 
     <groupId>com.github.h34tnet</groupId>
     <artifactId>scow</artifactId>
-    <version>0.2</version>
+    <version>0.3</version>
     <packaging>maven-plugin</packaging>
 
     <name>scow</name>
