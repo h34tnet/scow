@@ -45,25 +45,25 @@ public class CompilerTest {
         ResultSetMetaData msmd = pps.getMetaData();
 
         for (int i = 1; i < msmd.getColumnCount() + 1; i++) {
-            System.out.println(String.format("%s: %s / %s / %s / %d",
+            System.out.printf("%s: %s / %s / %s / %d%n",
                     msmd.getColumnName(i),
                     msmd.getColumnClassName(i),
                     msmd.getColumnType(i),
                     msmd.getColumnTypeName(i),
-                    msmd.getPrecision(i)));
+                    msmd.getPrecision(i));
         }
 
         Sql2oPojoCreator sql2oQueryPojoCreator = new Sql2oPojoCreator();
 
         JavaFile javaFile = sql2oQueryPojoCreator.compile(
                 connection, new SqliteTranslator(),
-                "foo.bar", "Baz", sql, Paths.get("foo/bar/baz")
+                "foo.bar", "Baz", sql, Paths.get("project/src/foo/bar/baz/Baz.sql"), Paths.get("project/src")
         );
 
         // this tests the finder and the compiler
         Assert.assertNotNull(javaFile);
 
-        System.out.println(javaFile.toString());
+        System.out.println(javaFile);
 
         File outputFile = outputFolder.newFile("Baz.java");
         Files.write(outputFile.toPath(), javaFile.toString().getBytes(StandardCharsets.UTF_8));
